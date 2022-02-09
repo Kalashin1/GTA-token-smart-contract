@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
-pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 import "./interface/IERC20.sol";
 import "./lib/SafeMath.sol";
@@ -72,17 +72,16 @@ contract Trixswap is ITrixswapERC20, TrixswapStakable {
   }
 
   function _mint(uint256 tokens) internal returns (bool success) {
-      require(msg.sender == owner);
       balances[msg.sender] += tokens;
       totalSupply += tokens;
       emit Minting(msg.sender, tokens);
-      success = true;
-      return success;
+      return true;
   }
 
-  function mint(uint256 amount) external returns (bool success) {
-    _mint(amount);
-  }
+	function mint(uint256 tokens) external returns (bool){
+		require(msg.sender == owner, "Only admins can call this function");
+		return _mint(tokens);
+	}
 
   function _burn(address account, uint256 amount) internal {
       require(
@@ -95,9 +94,9 @@ contract Trixswap is ITrixswapERC20, TrixswapStakable {
       );
 
       // Remove the amount from the account balance
-      balances[account] = balances[account] - amount;
+      balances[account] -= amount;
       // Decrease totalSupply
-      totalSupply = totalSupply - amount;
+      totalSupply -= amount;
       // Emit event, use zero address as reciever
       emit Transfer(account, address(0), amount);
   }
@@ -111,25 +110,30 @@ contract Trixswap is ITrixswapERC20, TrixswapStakable {
       return true;
   }
 
-  // staking function
-  function stake(uint256 _amount) public {
-      // Make sure staker actually is good for it
-      require(
-          _amount < balances[msg.sender],
-          "DevToken: Cannot stake more than you own"
-      );
-
-      _stake(_amount);
-      // Burn the amount of tokens on the sender
-      _burn(msg.sender, _amount);
+  function stake(uint256 amount) public returns(bool){
+    require(amount < balances[msg.sender]);
+    bool stakingStatus = _stake(amount);
+    if(stakingStatus){
+    _burn(msg.sender, amount);
+    return stakingStatus;
+    } else {
+			return false;
+    }
   }
 
-  function withdrawStake(uint256 amount, uint256 stake_index) public {
-      uint256 amount_to_mint = _withdrawStake(amount, stake_index);
-      // Return staked tokens to user
-      _mint(amount_to_mint);
+  function hasStaked(address staker) public returns(bool) {
+    return _hasStaked(staker);
   }
 
+  function unstake(uint256 amount) public returns(bool) {
+		bool unstakeStatus = _unStake(amount);
+		if(unstakeStatus){
+			_mint(amount);
+			return unstakeStatus;
+		}
+  }
+
+  
   event Approval(
       address indexed tokenOwner,
       address indexed spender,
