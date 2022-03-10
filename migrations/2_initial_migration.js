@@ -1,6 +1,5 @@
-const Trixswap = artifacts.require("Trixswap");
+const GTAGAMING = artifacts.require("GTAGAMING");
 
-module.exports = function (deployer) {
-  const totalSupply = Math.floor(100000000 * 18)
-  deployer.deploy(Trixswap, totalSupply);
+module.exports = async function (deployer) {
+  deployer.deploy(GTAGAMING);
 };

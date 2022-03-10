@@ -1,95 +1,77 @@
-var Trixswap = artifacts.require('./Trixswap.sol');
+var GTAGAMING = artifacts.require('./GTAGAMING.sol');
+var BigNumber = require('big-number');
 
-contract('Trixswap', async (accounts) => {
+contract('GTAGAMING', async (accounts) => {
 
-  it('sets the total supply upon deployment', async () => {
-    const trixswapInstace = await Trixswap.deployed();
-    const totalSupply = await trixswapInstace.totalSupply();
-    assert.equal(totalSupply.toNumber(), (100000000 * 18) , 'sets the totalSupply to 1,000,000');
-  })
+  // it('sets the total supply upon deployment', async () => {
+  //   const GTAGAMINGInstace = await GTAGAMING.deployed();
+  //   const totalSupply = await GTAGAMINGInstace.totalSupply();
+  //   assert.equal(totalSupply.toString(), 1000000000000000000000000 , 'sets the totalSupply to 1,000,000');
+  // })
 
   it('sets the name and symbol upon deployment', async () => {
-    const trixswapInstace = await Trixswap.deployed();
-    const name = await trixswapInstace.name();
-    const symbol = await trixswapInstace.symbol();
-    assert.equal(name, "Trixswap", 'sets the name to be set');
-    assert.equal(symbol, "TXSW", 'sets the symbol to be TXSW');
+    const GTAGAMINGInstace = await GTAGAMING.deployed();
+    const name = await GTAGAMINGInstace.name();
+    const symbol = await GTAGAMINGInstace.symbol();
+    assert.equal(name, "grandtheftgaming", 'sets the name to be set');
+    assert.equal(symbol, "GTA", 'sets the symbol to be TXSW');
   })
 
-  it('Read a balance', async () => {
-    const trixswapInstace = await Trixswap.deployed();
-    const balance = await trixswapInstace.balanceOf(accounts[0]);
-    console.log(balance.toNumber())
-    assert.equal(balance.toNumber(), (100000000 * 18), 'read the admin balance');
+  it("reads the balance of a user", async () => {
+    const GTAGAMINGInstace = await GTAGAMING.deployed();
+    const bal = await GTAGAMINGInstace.balanceOf(accounts[0]);
+    assert.equal(bal, 600000000 * Math.pow(10, 18));
   })
 
-  it('Mint Some new Tokens', async () => {
-    const trixswapInstace = await Trixswap.deployed();
-    const mintingStatus = await trixswapInstace.mint(1000);
-    console.log(mintingStatus)
-    // assert.equal(mintingStatus, true, 'should mine some new tokens');
-    const balance = await trixswapInstace.balanceOf(accounts[0]);
-    console.log(balance.toNumber())
-    assert.equal(balance.toNumber(), ((100000000 * 18) + 1000), 'read the admin balance');
+  it('should stake some tokens', async () => {
+    const GTAGAMINGInstace = await GTAGAMING.deployed();
+    const _initialBal = await GTAGAMINGInstace.balanceOf(accounts[0]);
+
+    let initialBal = Number(_initialBal)/Math.pow(10, 18)
+    const _stakingAmount = 6000000000000000000000;
+    let stakingAmount = _stakingAmount/Math.pow(10, 18)
+    
+    await GTAGAMINGInstace.stake(accounts[0], "6000000000000000000000");
+    const _bal = await GTAGAMINGInstace.balanceOf(accounts[0]);
+
+    let bal = Number(_bal)/Math.pow(10, 18)
+    assert.equal(initialBal, bal + stakingAmount)
+
+    const _stakedAmountFromContract = await GTAGAMINGInstace._getTotalStakedAmout(accounts[0]);
+    let stakedAmountFromContract = _stakedAmountFromContract/Math.pow(10, 18)
+    console.log(stakedAmountFromContract)
+
+    const _initialStakingDateFromContract = await GTAGAMINGInstace._getInitialStakeDate(accounts[0])
+    console.log(new Date(Number(_initialStakingDateFromContract) * 1000).toDateString())
+  })
+  
+  // it('should unstake some tokens', async () => {
+  //   const GTAGAMINGInstace = await GTAGAMING.deployed();
+  //   const _initialBal = await GTAGAMINGInstace.balanceOf(accounts[0]);
+  //   let initialBal = Number(_initialBal)/Math.pow(10, 18)
+  //   const _stakingAmount = 6000000000000000000000;
+  //   let stakingAmount = _stakingAmount/Math.pow(10, 18)
+  //   await GTAGAMINGInstace.unstake(accounts[0], "6000000000000000000000");
+  //   const _bal = await GTAGAMINGInstace.balanceOf(accounts[0]);
+  //   let bal = Number(_bal)/Math.pow(10, 18)
+  //   // console.table({ initialBal, bal, stakingAmount })
+  //   assert.equal(initialBal, bal - stakingAmount)
+  // })
+
+  it("should calculate rewards", async () => {
+    const GTAGAMINGInstace = await GTAGAMING.deployed();
+    const _stakingAmount = 6000000000000000000000;
+    let stakingAmount = _stakingAmount/Math.pow(10, 18)
+    await GTAGAMINGInstace.stake(accounts[0], "6000000000000000000000");
+    const _reward = await GTAGAMINGInstace.showReward(accounts[0]);
+    console.log(_reward/Math.pow(10, 18))
   })
 
-  it('Transfer some tokens', async () => {
-    const trixswapInstace = await Trixswap.deployed();
-    const mintingStatus = await trixswapInstace.transfer(accounts[1],10000);
-    // assert.equal(mintingStatus, true, 'should mine some new tokens');
-    const balance = await trixswapInstace.balanceOf(accounts[1]);
-    console.log(balance.toNumber())
-    assert.equal(balance.toNumber(), 10000, 'read the new balance');
+  it("should return the ether balance", async () => {
+    const GTAGAMINGInstace = await GTAGAMING.deployed();
+    const _etherBal = await GTAGAMINGInstace.getBalance();
+    const addr = await GTAGAMINGInstace._address();
+    await GTAGAMINGInstace.receive(10);
+    console.log(_etherBal/Math.pow(10, 18), addr)
   })
-
-  it('Should stake some tokens', async () => {
-    const trixswapInstace = await Trixswap.deployed();
-    let initialBal = await trixswapInstace.balanceOf(accounts[0])
-    initialBal = initialBal.toNumber();
-    const amountToStake = 2000;
-    await trixswapInstace.stake(amountToStake);
-    let balAfterStaking = await trixswapInstace.balanceOf(accounts[0]);
-    balAfterStaking = balAfterStaking.toNumber()
-    assert.equal(
-      balAfterStaking + amountToStake, 
-      initialBal, 
-      `expected ${balAfterStaking + amountToStake} to be equal to ${initialBal}`
-    )
-    let hasStaked = await trixswapInstace.hasStaked(accounts[0]);
-    assert(hasStaked, true, "has staked should be true");
-  })
-
-  it("checks if the user has staked before", async () => {
-    const trixswapInstace = await Trixswap.deployed();
-    let hasStaked = await trixswapInstace.hasStaked(accounts[0]);
-    assert(hasStaked, false, "has staked should be false");
-  })
-
-  it('Should unstake some tokens', async () => {
-    const trixswapInstace = await Trixswap.deployed();
-    let initialBal = await trixswapInstace.balanceOf(accounts[0])
-    initialBal = initialBal.toNumber();
-    const amountToStake = 2000;
-    await trixswapInstace.stake(amountToStake);
-    let balAfterStaking = await trixswapInstace.balanceOf(accounts[0]);
-    balAfterStaking = balAfterStaking.toNumber()
-
-    assert.equal(
-      balAfterStaking + amountToStake, 
-      initialBal, 
-      `expected ${balAfterStaking + amountToStake} to be equal to ${initialBal}`
-    )
-    let hasStaked = await trixswapInstace.hasStaked(accounts[0]);
-    assert(hasStaked, true, "has staked should be true");
-
-    await trixswapInstace.unstake(amountToStake);
-    const balAfterUnstaking = await trixswapInstace.balanceOf(accounts[0]);
-    assert.equal(
-      balAfterStaking + amountToStake, 
-      initialBal, 
-      `expected ${balAfterUnstaking} to be equal to ${initialBal}`
-    )
-  })
-
-
 })
